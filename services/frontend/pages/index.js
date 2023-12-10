@@ -6,18 +6,17 @@ import styles from '@/styles/Home.module.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export async function getServerSideProps() {
-  const res = (await fetch("http://localhost:8000").then(x => x.json()));
-  //const res = await fetch("http://localhost:8000");
-  //const data = await res.json();
+  const {status} = (await fetch("http://localhost:8000/status").then(x => x.json()));
+  const {username} = (await fetch("http://localhost:8000/username").then(x => x.json()));
   return {
     props: {
-     // status: res.status, //should be "ok"
-      status: res.status , //should be "ok"
+      status: status,
+      username: username,
     }
   }
 }
 
-export default function Home({status}) {
+export default function Home({status, username}) {
   return (
     <>
       <Head>
@@ -64,7 +63,7 @@ export default function Home({status}) {
           />
           
         </div>
-        <div>Status is: {status}</div>
+        <div>Status is: {status}, your username is: {username}</div>
 
         <div className={styles.grid}>
           <a
