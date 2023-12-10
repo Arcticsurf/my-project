@@ -5,18 +5,36 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
 )
 
 func main() {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		//resp := []byte('{"status":"ok"}')
-		//resp := []byte(`{"status": "ok"}`)
-
 		var resp []byte
-		if req.URL.Path == "/status" {
-			resp = []byte(`{"status": "okk"}`)
-		} else if req.URL.Path == "/username" {
-			resp = []byte(`{"username": "colin"}`)
+		if req.URL.Path == "/handler-initial-data" {
+			resp = []byte(`{"text": "initial"}`)
+		} else if req.URL.Path == "/handler" {
+			conn, _, _, err := ws.UpgradeHTTP(req, rw)
+			if err != nil {
+				log.Println("Error with WebSocket: ", err)
+				rw.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			go func() {
+				defer conn.Close()
+
+				time.Sleep(time.Second)
+				err = wsutil.WriteServerMessage(conn, ws.OpText, []byte(`{"text": "from-websocket"}`))
+
+				if err != nil {
+					log.Println("Error writing WebSocket data: ", err)
+					return
+				}
+			}()
+			return
 		} else {
 			rw.WriteHeader(http.StatusNotFound)
 			return
@@ -29,5 +47,4 @@ func main() {
 
 	log.Println("Server is available at http://localhost:8000")
 	log.Fatal(http.ListenAndServe(":8000", handler))
-
 }
